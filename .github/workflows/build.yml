@@ -1,16 +1,30 @@
 name: Build Kernel
+run-name: Build Kernel for ${{ inputs.firmware }}
 
 on:
   workflow_dispatch:
+    inputs:
+      firmware:
+        description: Stable/Beta?
+        required: true
+        type: choice
+        options:
+          - stable
+          - beta
+      ksu_type:
+        description: KernelSU type
+        required: true
+        type: choice
+        options:
+          - ksu
+          - sukisu
+          - ksun
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        firmware: [stable, beta]
-        ksu_type: [ksu, ksun, sukisu]
 
     steps:
       - name: Checkout repository
@@ -25,15 +39,14 @@ jobs:
         run: ./first_install.sh
 
       - name: Build Kernel
-        run: ./build_ksu.sh --${{ matrix.firmware }} --${{ matrix.ksu_type }}
+        run: ./build_ksu.sh --${{ inputs.firmware }} --${{ inputs.ksu_type }}
         env:
-          ARCHIVE: ${{ secrets.ARCHIVE }}
           GH_TOKEN: ${{ github.token }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: boot_${{ matrix.firmware }}_${{ matrix.ksu_type }}
+          name: boot_${{ inputs.firmware }}_${{ inputs.ksu_type }}
           path: output/*
           retention-days: 1
           archive: true
